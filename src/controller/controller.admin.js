@@ -1,5 +1,6 @@
 const Admin = require("../model/model.admin")
 const bcrypt = require('bcrypt');
+
 const jwt = require('jsonwebtoken');
 
 exports.createAdmin = async (req, res) => {
@@ -37,11 +38,20 @@ exports.loginAdmin = async (req,res) => {
         if (!isPasswordValid) {
             return res.status(401).json({ error: 'Invalid password' });
         }
-    
         // Create and send JWT token
+        let options = {
+            maxAge: 60 * 60 * 1000, // would expire in 20minutes
+            httpOnly: true, // The cookie is only accessible by the web server
+            secure: true,
+            sameSite: "None",
+        };
+
         const token = jwt.sign({ adminID: admin.id, email: admin.email }, SECRET_KEY, { expiresIn: '1h' });
-        
-        res.json({ token });
+        res.cookie("SessionID", token, options); // set the token to response header, so that the client sends it back on each subsequent request
+        res.status(200).json({
+            status: "success",
+            message: "You have successfully logged in.",
+        });
     } catch (error) {
         res.status(400).json({ error: error.message });
     }
